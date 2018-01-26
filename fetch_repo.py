@@ -3,7 +3,7 @@ import os
 import re
 import requests
 
-from collections import Counter
+from collections import Counter, OrderedDict
 from git import Repo
 
 def fetch_popular_repo():
@@ -23,9 +23,9 @@ def clone_repo(url):
         os.makedirs(repo_dir)
         Repo.clone_from(url, repo_dir)
 
-    return repo_dir
+    return repo_dir, repo_name
 
-def read_files(repo_dir, var_counter):
+def read_files(repo_dir, repo_var_counter):
     prog = re.compile('(?:const|var|let|function)\s+(\w+);?')
     directories = [repo_dir]
     while directories:
@@ -38,29 +38,34 @@ def read_files(repo_dir, var_counter):
             if not _file.endswith(".js"): continue
             curr_file = parent_dir + '/' + _file
             with open(curr_file , 'r') as content_file:
-                analyze_content(content_file, prog, var_counter)
+                analyze_content(content_file, prog, repo_var_counter)
 
-def analyze_content(contents, prog, var_counter):
+def analyze_content(contents, prog, repo_var_counter):
     content = contents.read()
     matches = prog.findall(content)
     if matches:
         for match in set(matches):
             if len(match) < 2: continue
-            var_counter[match] += 1
-        # print(var_counter.most_common(10))
+            repo_var_counter[match] += 1
+        # print(variable_dict.most_common(10))
 
 def main():
     # TODO:
-    # Find all the variable names for each seperate projects and
+    # 1. Find all the variable names for each seperate projects and
     # intersect them and see the results
-    # Should be {React: Counter(), Vue: Counter, ...}
+    #
+    # 2. Normalize the variables: Maybe by file or project?
+    # 3. Seperate out functions and variables
 
-    var_counter = Counter()
+    variable_dict = {}
     popular_repo_urls = fetch_popular_repo()
     for url in popular_repo_urls:
-        repo_dir = clone_repo(url)
-        read_files(repo_dir, var_counter)
-    print(var_counter.most_common(50))
+        repo_dir, repo_name = clone_repo(url)
+        variable_dict[repo_name] = Counter()
+        read_files(repo_dir, variable_dict[repo_name])
+    for key in variable_dict.keys():
+        variable_dict[key] = variable_dict[key].most_common(10)
+    print(json.dumps(variable_dict, indent=4, sort_keys=True))
 
 if __name__ == "__main__":
     main()
