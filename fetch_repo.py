@@ -12,7 +12,7 @@ def fetch_popular_repo():
     res = requests.get(api_url).json()
     for repo in res['items']:
         popular_repo_urls.append(repo['clone_url'])
-        if len(popular_repo_urls) == 100: break
+        if len(popular_repo_urls) == 6: break
     return popular_repo_urls
 
 def clone_repo(url):
@@ -44,17 +44,23 @@ def analyze_content(contents, prog, var_counter):
     content = contents.read()
     matches = prog.findall(content)
     if matches:
-        for match in matches:
+        for match in set(matches):
             if len(match) < 2: continue
             var_counter[match] += 1
-        print(var_counter.most_common(10))
+        # print(var_counter.most_common(10))
 
 def main():
+    # TODO:
+    # Find all the variable names for each seperate projects and
+    # intersect them and see the results
+    # Should be {React: Counter(), Vue: Counter, ...}
+
     var_counter = Counter()
     popular_repo_urls = fetch_popular_repo()
     for url in popular_repo_urls:
         repo_dir = clone_repo(url)
         read_files(repo_dir, var_counter)
+    print(var_counter.most_common(50))
 
 if __name__ == "__main__":
     main()
