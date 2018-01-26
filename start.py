@@ -1,4 +1,3 @@
-import codecs
 import json
 import os
 import re
@@ -13,7 +12,7 @@ def fetch_popular_repo():
     res = requests.get(api_url).json()
     for repo in res['items']:
         popular_repo_urls.append(repo['clone_url'])
-        if len(popular_repo_urls) == 10: break
+        if len(popular_repo_urls) == 7: break
     return popular_repo_urls
 
 def clone_repo(url):
@@ -32,14 +31,13 @@ def read_files(repo_dir, repo_var_counter):
     while directories:
         parent_dir = directories.pop()
         all_dir = next(os.walk(parent_dir))[1]
-        all_file = next(os.walk(parent_dir))[2]
         for _dir in all_dir:
             if _dir == '.git': continue
             directories.append(parent_dir + '/' + _dir)
-        for _file in all_file:
+        for _file in os.listdir(parent_dir):
             if not _file.endswith(".js"): continue
             curr_file = parent_dir + '/' + _file
-            with codecs.open(curr_file , 'r', encoding='utf-8', errors='ignore') as content_file:
+            with open(curr_file , 'r') as content_file:
                 analyze_content(content_file, prog, repo_var_counter)
 
 def analyze_content(contents, prog, repo_var_counter):
@@ -65,10 +63,9 @@ def main():
         repo_dir, repo_name = clone_repo(url)
         variable_dict[repo_name] = Counter()
         read_files(repo_dir, variable_dict[repo_name])
-    print(variable_dict)
-    # for key in variable_dict.keys():
-        # variable_dict[key] = variable_dict[key].most_common(10)
-    # print(json.dumps(variable_dict, indent=2, sort_keys=True))
+    for key in variable_dict.keys():
+        variable_dict[key] = variable_dict[key].most_common(10)
+    print(json.dumps(variable_dict, indent=2, sort_keys=True))
 
 if __name__ == "__main__":
     main()
