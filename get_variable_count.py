@@ -4,7 +4,6 @@ import os
 import re
 import requests
 
-from collections import Counter
 from git import Repo
 
 def fetch_popular_repo():
@@ -26,7 +25,7 @@ def clone_repo(url):
 
     return repo_dir, repo_name
 
-def read_files(repo_dir, repo_var_counter):
+def read_files(repo_dir, var_counter):
     prog = re.compile('(?:const|var|let|function)\s+(\w+);?')
     directories = [repo_dir]
     while directories:
@@ -40,16 +39,13 @@ def read_files(repo_dir, repo_var_counter):
             if not _file.endswith(".js"): continue
             curr_file = parent_dir + '/' + _file
             with codecs.open(curr_file , 'r', encoding='utf-8', errors='ignore') as content_file:
-                get_variable_count(content_file, prog, repo_var_counter)
+                get_variable_count(content_file.read(), prog, var_counter)
 
-def get_variable_count(contents, prog, repo_var_counter):
-    content = contents.read()
+def get_variable_count(content, prog, var_counter):
     matches = prog.findall(content)
     if matches:
         for match in set(matches):
-            if len(match) > 1:
-                repo_var_counter[match] += 1
-        # print(variable_dict.most_common(10))
+            var_counter[match] = var_counter[match] + 1 if match in var_counter and len(match) > 1 else 1
 
 def write_to_file(data):
     with open('variable-dict.txt', 'w') as _file:
@@ -67,7 +63,7 @@ def main():
     popular_repo_urls = fetch_popular_repo()
     for url in popular_repo_urls:
         repo_dir, repo_name = clone_repo(url)
-        variable_dict[repo_name] = Counter()
+        variable_dict[repo_name] = {}
         read_files(repo_dir, variable_dict[repo_name])
     write_to_file(variable_dict)
     # for key in variable_dict.keys():
