@@ -40,9 +40,9 @@ def read_files(repo_dir, repo_var_counter):
             if not _file.endswith(".js"): continue
             curr_file = parent_dir + '/' + _file
             with codecs.open(curr_file , 'r', encoding='utf-8', errors='ignore') as content_file:
-                analyze_content(content_file, prog, repo_var_counter)
+                get_variable_count(content_file, prog, repo_var_counter)
 
-def analyze_content(contents, prog, repo_var_counter):
+def get_variable_count(contents, prog, repo_var_counter):
     content = contents.read()
     matches = prog.findall(content)
     if matches:
@@ -50,6 +50,10 @@ def analyze_content(contents, prog, repo_var_counter):
             if len(match) > 1:
                 repo_var_counter[match] += 1
         # print(variable_dict.most_common(10))
+
+def write_to_file(data):
+    with open('variable-dict.txt', 'w') as _file:
+        json.dump(data, _file, indent=2, sort_keys=True)
 
 def main():
     # TODO:
@@ -65,7 +69,7 @@ def main():
         repo_dir, repo_name = clone_repo(url)
         variable_dict[repo_name] = Counter()
         read_files(repo_dir, variable_dict[repo_name])
-    print(variable_dict)
+    write_to_file(variable_dict)
     # for key in variable_dict.keys():
         # variable_dict[key] = variable_dict[key].most_common(10)
     # print(json.dumps(variable_dict, indent=2, sort_keys=True))
