@@ -8,26 +8,35 @@ from git import Repo
 popular_variable_dict = {}
 
 def fetch_popular_repo():
-    git_url = 'https://github.com/billcccheng/ptt-search.git'
-    repo_dir = './repos/ptt-search'
-    prog = re.compile('(?:const|var|let)\s+(\w+);?')
+    git_url = 'https://github.com/facebook/react.git'
+    repo_dir = './repos/react'
+    prog = re.compile('(?:const|var|let|function)\s+(\w+);?')
 
     if not os.path.exists(repo_dir):
         os.makedirs(repo_dir)
         Repo.clone_from(git_url, repo_dir)
 
-    directories = []
-    for _file in os.listdir(repo_dir):
-        if os.path.isdir(repo_dir + '/' + _file):
-            directories.append(_file)
-    # print(directories)
-    with open('./repos/ptt-search/app/components/App.js', 'r') as content_file:
-        analyze_content(content_file, prog)
+    directories = [repo_dir]
+    while directories:
+        parent_dir = directories.pop()
+        all_dir = next(os.walk(parent_dir))[1]
+        for _dir in all_dir:
+            if _dir == '.git': continue
+            directories.append(parent_dir + '/' + _dir)
+        for _file in os.listdir(parent_dir):
+            if not _file.endswith(".js"): continue
+            curr_file = parent_dir + '/' + _file
+            with open(curr_file , 'r') as content_file:
+                analyze_content(content_file, prog)
 
 def analyze_content(contents, prog):
     content = contents.read()
     match = prog.findall(content)
-    print(match)
+    # TODO:
+    # Plug the matches into the dictionary
+    if match:
+        match.sort()
+        print(match)
 
 def main():
     fetch_popular_repo()
