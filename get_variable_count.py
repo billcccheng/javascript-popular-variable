@@ -26,7 +26,7 @@ def clone_repo(url):
     return repo_dir, repo_name
 
 def read_files(repo_dir, var_counter):
-    prog = re.compile('(?:const|var|let|function)\s+(\w+);?')
+    find_var_name = re.compile('(?:const|var|let|function)\s+(\w+);?')
     directories = [repo_dir]
     while directories:
         parent_dir = directories.pop()
@@ -40,7 +40,7 @@ def read_files(repo_dir, var_counter):
             curr_file = parent_dir + '/' + _file
             with codecs.open(curr_file, 'r', encoding='utf-8', errors='ignore') as content_file:
                 content = content_file.read()
-                matches = prog.findall(content)
+                matches = find_var_name.findall(content)
                 get_variable_count(matches, var_counter)
 
 def get_variable_count(matches, var_counter):
