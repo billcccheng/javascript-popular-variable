@@ -38,11 +38,12 @@ def read_files(repo_dir, var_counter):
         for _file in all_file:
             if not _file.endswith(".js"): continue
             curr_file = parent_dir + '/' + _file
-            with codecs.open(curr_file , 'r', encoding='utf-8', errors='ignore') as content_file:
-                get_variable_count(content_file.read(), prog, var_counter)
+            with codecs.open(curr_file, 'r', encoding='utf-8', errors='ignore') as content_file:
+                content = content_file.read()
+                matches = prog.findall(content)
+                get_variable_count(matches, var_counter)
 
-def get_variable_count(content, prog, var_counter):
-    matches = prog.findall(content)
+def get_variable_count(matches, var_counter):
     if matches:
         for match in set(matches):
             var_counter[match] = var_counter[match] + 1 if match in var_counter and len(match) > 1 else 1
