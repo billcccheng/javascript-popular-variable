@@ -4,7 +4,7 @@ import os
 import re
 import requests
 
-from collections import Counter, OrderedDict
+from collections import Counter
 from git import Repo
 
 def fetch_popular_repo():
