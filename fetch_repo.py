@@ -22,9 +22,12 @@ def fetch_popular_repo():
             directories.append(_file)
     # print(directories)
     with open('./repos/ptt-search/app/components/App.js', 'r') as content_file:
-        content = content_file.read()
-        match = prog.findall(content)
-        # print(match)
+        analyze_content(content_file, prog)
+
+def analyze_content(contents, prog):
+    content = contents.read()
+    match = prog.findall(content)
+    print(match)
 
 def main():
     fetch_popular_repo()
