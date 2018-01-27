@@ -56,9 +56,9 @@ def main():
     # TODO:
     # 1. Find all the variable names for each seperate projects and
     # intersect them and see the results
-    #
     # 2. Normalize the variables: Maybe by file or project?
     # 3. Seperate out functions and variables
+    # 4. Remove repo when finished parsing
 
     variable_dict = {}
     popular_repo_urls = fetch_popular_repo()
