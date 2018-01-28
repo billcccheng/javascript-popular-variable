@@ -16,8 +16,8 @@ def fetch_popular_repo():
     return popular_repo_urls
 
 def clone_repo(url):
-    find_repo_name = re.compile('(\w+\/[^\/]+).git$')
-    repo_name = find_repo_name.findall(url)[0].replace('/','-')
+    find_repo_name = re.compile('([^\/]+).git$')
+    repo_name = find_repo_name.findall(url)[0]
     repo_dir = './repos/' + repo_name
     if not os.path.exists(repo_dir):
         os.makedirs(repo_dir)
@@ -46,16 +46,17 @@ def read_files(repo_dir, var_counter):
 def get_variable_count(matches, var_counter):
     if matches:
         for match in set(matches):
-            var_counter[match] = var_counter[match] + 1 if match in var_counter and len(match) > 1 else 1
+            if len(match) > 2:
+                var_counter[match] = var_counter[match] + 1 if match in var_counter else 1
 
 def write_to_file(data):
     with open('variable-dict.txt', 'w') as _file:
-        json.dump(data, _file, indent=2, sort_keys=True)
+        json.dump(data, _file, sort_keys=True)
 
 def main():
     # TODO:
     # 1. Find all the variable names for each seperate projects and
-    # intersect them and see the results
+    #    intersect them and see the results
     # 2. Normalize the variables: Maybe by file or project?
     # 3. Seperate out functions and variables
     # 4. Remove repo when finished parsing
