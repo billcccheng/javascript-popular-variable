@@ -7,13 +7,14 @@ import requests
 from git import Repo
 
 def fetch_popular_repo():
-    popular_repo_urls = []
+    popular_repo_urls, popular_html_urls = [], []
     api_url = 'https://api.github.com/search/repositories?q=stars:%3E1+language:javascript&sort=stars&order=desc&type=Repositories%27'
     res = requests.get(api_url).json()
     for repo in res['items']:
+        popular_html_urls.append(repo['html_url'] + '/search/?q=')
         popular_repo_urls.append(repo['clone_url'])
         if len(popular_repo_urls) == 10: break
-    return popular_repo_urls
+    return popular_repo_urls, popular_html_urls
 
 def clone_repo(url):
     find_repo_name = re.compile('([^\/]+).git$')
@@ -25,9 +26,10 @@ def clone_repo(url):
 
     return repo_dir, repo_name
 
-def read_files(repo_dir, var_counter):
+def read_files(repo_dir, var_counter, html_url):
     find_var_name = re.compile('(?:const|var|let|function)\s+(\w+);?')
     directories = [repo_dir]
+    group_name = repo_dir.replace('./repos/', '')
     while directories:
         parent_dir = directories.pop()
         all_dir = next(os.walk(parent_dir))[1]
@@ -37,20 +39,25 @@ def read_files(repo_dir, var_counter):
             directories.append(parent_dir + '/' + _dir)
         for _file in all_file:
             if not _file.endswith(".js"): continue
-            curr_file = parent_dir + '/' + _file
-            with codecs.open(curr_file, 'r', encoding='utf-8', errors='ignore') as content_file:
+            curr_file_path = parent_dir + '/' + _file
+            with codecs.open(curr_file_path, 'r', encoding='utf-8', errors='ignore') as content_file:
                 content = content_file.read()
                 matches = find_var_name.findall(content)
-                get_variable_count(matches, var_counter)
+                get_variable_count(matches, var_counter,  html_url)
 
-def get_variable_count(matches, var_counter):
+def get_variable_count(matches, var_counter, url):
     if matches:
         for match in set(matches):
-            if len(match) > 2:
-                var_counter[match] = var_counter[match] + 1 if match in var_counter else 1
+            if len(match) < 3:
+                continue
+            if match in var_counter:
+                var_counter[match]["counter"] = var_counter[match]["counter"] + 1
+            else:
+                _url = url + match
+                var_counter[match] = {"counter" : 1, "url": _url}
 
 def write_to_file(data):
-    with open('variable-dict.txt', 'w') as _file:
+    with open('variable-dict-update', 'w') as _file:
         json.dump(data, _file, sort_keys=True)
 
 def main():
@@ -62,11 +69,11 @@ def main():
     # 4. Remove repo when finished parsing
 
     variable_dict = {}
-    popular_repo_urls = fetch_popular_repo()
-    for url in popular_repo_urls:
+    repo_urls, html_urls = fetch_popular_repo()
+    for index, url in enumerate(repo_urls):
         repo_dir, repo_name = clone_repo(url)
         variable_dict[repo_name] = {}
-        read_files(repo_dir, variable_dict[repo_name])
+        read_files(repo_dir, variable_dict[repo_name], html_urls[index])
     write_to_file(variable_dict)
     # for key in variable_dict.keys():
         # variable_dict[key] = variable_dict[key].most_common(10)
